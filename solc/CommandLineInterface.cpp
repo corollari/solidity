@@ -45,6 +45,7 @@
 #include <libdevcore/CommonData.h>
 #include <libdevcore/CommonIO.h>
 #include <libdevcore/JSON.h>
+#include <libdevcore/termcolor.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -83,6 +84,25 @@ std::ostream& serr(bool _used = true)
 	if (_used)
 		g_hasOutput = true;
 	return cerr;
+}
+
+static bool setupTermColors(bool color, bool nocolor)
+{
+	if (color && nocolor)
+		return false;
+
+	if (color)
+	{
+		termcolor::enable_if(cout, true);
+		termcolor::enable_if(cerr, true);
+	}
+	else if (!nocolor)
+	{
+		termcolor::enable_if(cout, termcolor::is_terminal(cout));
+		termcolor::enable_if(cerr, termcolor::is_terminal(cerr));
+	}
+
+	return true;
 }
 
 #define cout
@@ -134,6 +154,8 @@ static string const g_strStrictAssembly = "strict-assembly";
 static string const g_strPrettyJson = "pretty-json";
 static string const g_strVersion = "version";
 static string const g_strIgnoreMissingFiles = "ignore-missing";
+static string const g_strColor = "color";
+static string const g_strNoColor = "no-color";
 
 static string const g_argAbi = g_strAbi;
 static string const g_argPrettyJson = g_strPrettyJson;
@@ -169,6 +191,8 @@ static string const g_argStrictAssembly = g_strStrictAssembly;
 static string const g_argVersion = g_strVersion;
 static string const g_stdinFileName = g_stdinFileNameStr;
 static string const g_argIgnoreMissingFiles = g_strIgnoreMissingFiles;
+static string const g_argColor = g_strColor;
+static string const g_argNoColor = g_strNoColor;
 
 /// Possible arguments to for --combined-json
 static set<string> const g_combinedJsonArgs
@@ -652,6 +676,8 @@ Allowed options)",
 			po::value<string>()->value_name("path(s)"),
 			"Allow a given path for imports. A list of paths can be supplied by separating them with a comma."
 		)
+		(g_argColor.c_str(), "Force colored output.")
+		(g_argNoColor.c_str(), "Explicitly disable colored output, disabling terminal auto-detection.")
 		(g_argIgnoreMissingFiles.c_str(), "Ignore missing files.");
 	po::options_description outputComponents("Output Components");
 	outputComponents.add_options()
@@ -688,6 +714,12 @@ Allowed options)",
 	catch (po::error const& _exception)
 	{
 		serr() << _exception.what() << endl;
+		return false;
+	}
+
+	if (!setupTermColors(m_args.count(g_argColor), m_args.count(g_argNoColor)))
+	{
+		serr() << "Option " << g_argColor << " and " << g_argNoColor << " are mutualy exclusive." << endl;
 		return false;
 	}
 
