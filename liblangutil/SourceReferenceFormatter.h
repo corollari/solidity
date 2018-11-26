@@ -50,7 +50,7 @@ public:
 	{}
 
 	/// Prints source location if it is given.
-	void printSourceLocation(langutil::SourceLocation const* _location);
+	void printSourceLocation(langutil::SourceLocation const* _location, std::string const& _msg = "");
 	void printExceptionInformation(dev::Exception const& _exception, std::string const& _name);
 
 	static std::string formatExceptionInformation(
@@ -67,7 +67,7 @@ public:
 	}
 private:
 	/// Prints source name if location is given.
-	void printSourceName(langutil::SourceLocation const* _location);
+	void printSourceName(langutil::SourceLocation const* _location, int leftpad);
 
 	std::ostream& m_stream;
 	ScannerFromSourceNameFun m_scannerFromSourceName;
